@@ -28,8 +28,13 @@ keyword Keywords = "swap" | "test" | "foreach";
  * 1. Swap: "swap" Id "," Id ";"
  */
   
-Statement desugar((Statement)`swap <Id x>, <Id y>;`)
-  = /* you should replace this */ dummyStat();
+Statement desugar((Statement)`swap <Id x>, <Id y>;`) {
+	return (Statement) `(function() {
+						'	var tmp = <Id x>;
+						'	<Id x> = <Id y>;
+						'	<Id y> = tmp;
+						'})();`;
+}
 
 test bool testSwap()
   = desugar((Statement)`swap x, y;`)
@@ -43,8 +48,13 @@ test bool testSwap()
  * 2. Test: "test" Expression "should" "be" Expression ";"
  */
 
-Statement desugar((Statement)`test <Expression x> should be <Expression y>;`)
-  = /* you should replace this */ dummyStat();
+Statement desugar((Statement)`test <Expression x> should be <Expression y>;`) {
+	return (Statement)`(function(actual, expected) { 
+						'   if (actual !== expected) {
+						'     console.log("Test failed; expected: " + expected + "; got: " + actual);    
+						'   }
+						'})(<Expression x>, <Expression y>);`;
+}
   
 test bool testTest()
   = desugar((Statement)`test 3 * 3 should be 9;`)
@@ -59,9 +69,14 @@ test bool testTest()
  */
  
   
-Statement desugar((Statement)`foreach (var <Id x> in <Expression e>) <Statement s>`)
-  = /* you should replace this */ dummyStat();
-  
+Statement desugar((Statement)`foreach (var <Id x> in <Expression e>) <Statement s>`) {
+	return (Statement) `(function(arr) {
+						'  for (var i = 0; i \< arr.length; i++) { 
+						'    var <Id x> = arr[i]; 
+						'    <Statement s>
+						'  }
+						'})(<Expression e>);`;
+}
 
 test bool testForeach()
   = desugar((Statement)`foreach (var x in [1,2,3]) print(x);`)
@@ -77,8 +92,14 @@ test bool testForeach()
  */
  
 
-Expression desugar((Expression)`<Id param> =\> <Expression body>`)
-  = /* you should replace this */ dummyExp();
+Expression desugar((Expression)`<Id param> =\> <Expression body>`) {
+	Expression body2 = replaceThis(body);
+	return (Expression)`(function (_this) { 
+						'   return function (<Id param>) { 
+						'      return <Expression body2>; 
+						'   }; 
+						'})(this)`;
+}
 
 Expression replaceThis(Expression e) {
   return top-down-break visit (e) {
