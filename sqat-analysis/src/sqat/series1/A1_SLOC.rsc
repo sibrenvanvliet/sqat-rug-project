@@ -85,6 +85,7 @@ SLOC sloc(loc project) {
   return result;
 }
 
+/* Tests */
 test bool testSLOC1()
   = nLinesOfCode("code();\n\n\n\n\t\n//comment\n")
   == 1;
