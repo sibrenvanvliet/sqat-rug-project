@@ -45,22 +45,20 @@ int methodComplexity(Statement impl) {
 	int branches = 0;
 	
 	visit(impl) {
-		case \assert(_)							: branches += 1;
-		case \assert(_,_)						: branches += 1;
-		case \do(body,_)						: branches += 1;
-		case \foreach(_,_,body)					: branches += 1;
-		case \for(_,_,_,body)					: branches += 1;
-		case \for(_,_,body)						: branches += 1;
-		case \if(_,thenBranch)					: branches += 1;
-		case \if(_,thenBranch,elseBranch)		: branches += 1;
-		case \case(_)							: branches += 1;
-		case \defaultCase()						: branches += 1;
-		case \try(body,catchClauses)			: branches += 1;
-		case \try(body,catchClauses,\finally)	: branches += 1;
-		case \catch(_,body)						: branches += 1;
-		case \while(_,body)						: branches += 1;
-		case infix(_,"&&",_)					: branches += 1;
-		case infix(_,"||",_)					: branches += 1;
+		case \do(_,_) 			: branches += 1;
+		case \foreach(_,_,_)	: branches += 1;
+		case \for(_,_,_,_) 		: branches += 1;
+		case \for(_,_,_) 		: branches += 1;
+		case \if(_,_) 			: branches += 1;
+		case \if(_,_,_) 		: branches += 1;
+		case \case(_) 			: branches += 1;
+		case \defaultCase()		: branches += 1;
+		case \try(_,_)			: branches += 1;
+		case \try(_,_,_)		: branches += 1;
+		case \catch(_,_)		: branches += 1;
+		case \while(_,_)		: branches += 1;
+		case infix(_,"&&",_)	: branches += 1;
+		case infix(_,"||",_)	: branches += 1;
 	}
 	
 	return branches + 1;
