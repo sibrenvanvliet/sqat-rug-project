@@ -1,0 +1,21 @@
+nl.tudelft.jpacman.npc.ghost.Blinky cannot inherit nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit must import nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit must depend nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit must invoke nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit must instantiate nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit must inherit nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit may import nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit may depend nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit may invoke nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit may instantiate nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit may inherit nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit cannot import nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit cannot depend nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.sprite.SpriteStore.loadSpriteFromResources cannot invoke nl.tudelft.jpacman.level.MapParser
+nl.tudelft.jpacman.board.Unit cannot instantiate nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit cannot inherit nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit can only import nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit can only depend nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit can only invoke nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.board.Unit can only instantiate nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.npc.ghost.Ghost can only inherit nl.tudelft.jpacman.npc.ghost.Blinky

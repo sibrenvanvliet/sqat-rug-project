@@ -22,7 +22,7 @@ syntax Relation
   | "depend" // class/pkg
   | "invoke" // method
   | "instantiate" // class
-  | "inherit" //class 
+  | "inherit" //class
   ;
 
 syntax Entity
