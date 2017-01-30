@@ -22,7 +22,17 @@ Part 1
 
 An example is: ensure that the game logic component does not 
 depend on the GUI subsystem. Another example could relate to
-the proper use of factories.   
+the proper use of factories.
+	The first example is not (easily) possible because we cannot
+	check a rule like "jpacman.game cannot depend jpacman.ui" because
+	the M3 tree works on class and method levels, we have not been able
+	to find the package level.
+	The second example is not possible because constraints like
+	"only GameFactory can instantiate Game" do not exist in the provided
+	language. Furthermore, we would have to write a rule checking this
+	for each factory individually, because the provided language does
+	not offer regular expressions, so that we could add a rule like
+	"only XFactory can instantiate X".
 
 Make sure that at least one of them is violated (perhaps by
 first introducing the violation).
@@ -56,12 +66,26 @@ Tip:
 
 Questions
 - how would you test your evaluator of Dicto rules? (sketch a design)
+	A way is to build a very small Java application which encompasses all kinds
+	of rules you would like to enforce. Then you generate its M3 tree and look
+	manually whether the system complies to your constraints in mind. Then you
+	use Dicto with said constraints to see whether its result matches with your
+	manually found result.
 - come up with 3 rule types that are not currently supported by this version
   of Dicto (and explain why you'd need them).
-  	regexes?
-  	constructor calls
-  	interfaces
-  	methods because parentheses are noooot accepted boi
+  	"only ... can ..."
+  		See the explanation on game logic-GUI interaction why this would be useful.
+  	regular expression rules
+  		See the explanation on factories why this would be useful.
+  	explicit mention of method calls
+  		The provided Dicto language does not accept the use of parantheses.
+  		Because M3 does use parentheses to denote the invocations of specific methods
+  		(unmissable in cases of polymorphism, where the specific types of arguments
+  		decides which method is called) this makes this version of Dicto incapable
+  		of putting constraints on method calls.
+  	implementing interfaces
+  		The provided Dicto language does not have a keyword for creating a constraint
+  		that checks whether or not a class implements a certain interface.
 */
 
 M3 m3g;
@@ -76,7 +100,9 @@ str prettyLoc(loc l) {
 	return replaceAll(replaceAll(replaceAll(toString(l), "java+class:///", ""), "/", "."), "|", "");
 }
 
-// All the checks
+/* The 'Must<Action>' functions add a warning message if
+ * e1 does not <Action> e2
+ */
 void checkMustImport(Entity e1, Entity e2) {
 }
 
@@ -97,6 +123,9 @@ void checkMustInherit(Entity e1, Entity e2) {
 	}
 }
 
+/* The 'May' functions are empty because these rules cannot be violated,
+ * therefore there are no warning messages to be added.
+ */
 void checkMayImport(Entity e1, Entity e2) {
 }
 
@@ -112,6 +141,9 @@ void checkMayInstantiate(Entity e1, Entity e2) {
 void checkMayInherit(Entity e1, Entity e2) {
 }
 
+/* The 'Cannot<Action>' functions add a warning message if
+ * e1 <Action>s e2
+ */
 void checkCannotImport(Entity e1, Entity e2) {
 }
 
@@ -119,12 +151,6 @@ void checkCannotDepend(Entity e1, Entity e2) {
 }
 
 void checkCannotInvoke(Entity e1, Entity e2) {
-	loc l1 = entity2loc(e1);
-	loc l2 = entity2loc(e2);
-	println(m3g@methodInvocation[l1]);
-	if (false) {
-		msgs += warning(toString(e1)+" invokes "+toString(e2)+" which violates rule "+toString(ruleg), l1);
-	}
 }
 
 void checkCannotInstantiate(Entity e1, Entity e2) {
@@ -138,6 +164,9 @@ void checkCannotInherit(Entity e1, Entity e2) {
 	}
 }
 
+/* The 'CanOnly<Action>' functions add a warning message if
+ * e1 <Action>s eX where eX != e2
+ */
 void checkCanOnlyImport(Entity e1, Entity e2) {
 }
 
@@ -159,7 +188,13 @@ void checkCanOnlyInherit(Entity e1, Entity e2) {
 	}
 }
 
-// call eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), createM3FromEclipseProject(|project://jpacman-framework|));
+// To run:
+// import sqat::series2::A2_CheckArch;
+// import sqat::series2::Dicto;
+// import lang::java::jdt::m3::Core;
+// import ParseTree;
+// M3 m3 = createM3FromEclipseProject(|project://jpacman-framework|);
+// eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
 set[Message] eval(start[Dicto] dicto, M3 m3) = eval(dicto.top, m3);
 
 set[Message] eval((Dicto)`<Rule* rules>`, M3 m3) 

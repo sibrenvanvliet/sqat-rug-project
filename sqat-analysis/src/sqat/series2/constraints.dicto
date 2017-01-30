@@ -1,21 +1,9 @@
-nl.tudelft.jpacman.npc.ghost.Blinky cannot inherit nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit must import nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit must depend nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit must invoke nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit must instantiate nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit must inherit nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit may import nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit may depend nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit may invoke nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit may instantiate nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit may inherit nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit cannot import nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit cannot depend nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.sprite.SpriteStore.loadSpriteFromResources cannot invoke nl.tudelft.jpacman.level.MapParser
-nl.tudelft.jpacman.board.Unit cannot instantiate nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit cannot inherit nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit can only import nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit can only depend nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit can only invoke nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.board.Unit can only instantiate nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.npc.ghost.Ghost can only inherit nl.tudelft.jpacman.npc.ghost.Blinky
+nl.tudelft.jpacman.npc.NPC cannot inherit nl.tudelft.jpacman.ui.Action
+nl.tudelft.jpacman.board.Board cannot inherit nl.tudelft.jpacman.ui.BoardPanel
+
+nl.tudelft.jpacman.ui.ButtonPanel must inherit javax.swing.JPanel
+nl.tudelft.jpacman.ui.BoardPanel must inherit javax.swing.JPanel
+
+nl.tudelft.jpacman.npc.ghost.Blinky can only inherit nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.ui.Action can only inherit javax.swing.Action
+nl.tudelft.jpacman.ui.Action must inherit javax.swing.Action
