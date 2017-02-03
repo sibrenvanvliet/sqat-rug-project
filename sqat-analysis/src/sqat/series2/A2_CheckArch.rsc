@@ -2,9 +2,11 @@ module sqat::series2::A2_CheckArch
 
 import sqat::series2::Dicto;
 import lang::java::jdt::m3::Core;
+import lang::java::jdt::m3::AST;
 import Message;
 import ParseTree;
 import IO;
+import List;
 import ToString;
 import String;
 import Set;
@@ -88,22 +90,67 @@ Questions
   		that checks whether or not a class implements a certain interface.
 */
 
-M3 m3g;
+set[Declaration] jpacmanASTs() = createAstsFromEclipseProject(|project://jpacman-framework/src|, true);
+M3 m3 = createM3FromEclipseProject(|project://jpacman-framework|);
+
 Rule ruleg;
 set[Message] msgs = {};
+rel[str from, str to] constructorCalls = {};
+
+str m3loc2str(str s) {
+	str sWithoutEnd;
+	
+	if (findFirst(s, "(") == -1) {
+		sWithoutEnd = substring(s, 0, findLast(s, "|"));
+	} else {
+		sWithoutEnd = substring(s, 0, findFirst(s, "("));
+	}
+	return replaceAll(substring(sWithoutEnd, findFirst(sWithoutEnd, ":///")+4, findLast(sWithoutEnd, "/")), "/", ".");
+}
+
+void findConstructorCalls() {
+	for (tuple[loc from, loc to] t <- m3@methodInvocation) {
+		str from = toString(t.from);
+		str to = toString(t.to);
+		if (findFirst(to, "java+constructor") != -1) {
+			constructorCalls[m3loc2str(from)] += m3loc2str(to);
+			//println(m3loc2str(from) + " has a constructor of " + m3loc2str(to));
+		}
+	}
+}
 
 loc entity2loc(Entity e) {
 	return |java+class:///| + replaceAll(toString(e), ".", "/");
 }
 
-str prettyLoc(loc l) {
+str loc2str(loc l) {
 	return replaceAll(replaceAll(replaceAll(toString(l), "java+class:///", ""), "/", "."), "|", "");
+}
+
+str astSrc2str(loc l) {
+	return replaceAll(substring(toString(l), findFirst(toString(l), "nl/"), findFirst(toString(l), ".java")), "/", ".");
 }
 
 /* The 'Must<Action>' functions add a warning message if
  * e1 does not <Action> e2
  */
 void checkMustImport(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	loc l2 = entity2loc(e2);
+	bool wasImported = false;
+	for (Declaration d <- jpacmanASTs()) {
+		visit(d){
+			case \import(str name) : {
+				if (astSrc2str(d@src) == loc2str(l1) && loc2str(l2) == name) {
+					wasImported = true;
+					return;
+				}
+			}
+		}
+	}
+	if (!wasImported) {
+		msgs += warning(toString(e1)+" does not import "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+	}
 }
 
 void checkMustDepend(Entity e1, Entity e2) {
@@ -113,12 +160,17 @@ void checkMustInvoke(Entity e1, Entity e2) {
 }
 
 void checkMustInstantiate(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	loc l2 = entity2loc(e2);
+	if (isEmpty([x | x <- constructorCalls[toString(e1)], x == toString(e2)])) {
+		msgs += warning(toString(e1)+" does not instantiate "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+	}
 }
 
 void checkMustInherit(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
-	if (m3g@extends[l1] != {l2}) {
+	if (m3@extends[l1] != {l2}) {
 		msgs += warning(toString(e1)+" does not inherit "+toString(e2)+" which violates rule "+toString(ruleg), l1);
 	}
 }
@@ -145,6 +197,17 @@ void checkMayInherit(Entity e1, Entity e2) {
  * e1 <Action>s e2
  */
 void checkCannotImport(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	loc l2 = entity2loc(e2);
+	for (Declaration d <- jpacmanASTs()) {
+		visit(d){
+			case \import(str name) : {
+				if (astSrc2str(d@src) == loc2str(l1) && loc2str(l2) == name) {
+					msgs += warning(toString(e1)+" imports "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+				}
+			}
+		}
+	}
 }
 
 void checkCannotDepend(Entity e1, Entity e2) {
@@ -154,12 +217,17 @@ void checkCannotInvoke(Entity e1, Entity e2) {
 }
 
 void checkCannotInstantiate(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	loc l2 = entity2loc(e2);
+	if (!isEmpty([x | x <- constructorCalls[toString(e1)], x == toString(e2)])) {
+		msgs += warning(toString(e1)+" instantiates "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+	}
 }
 
 void checkCannotInherit(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
-	if (m3g@extends[l1] == {l2}) {
+	if (m3@extends[l1] == {l2}) {
 		msgs += warning(toString(e1)+" inherits "+toString(e2)+" which violates rule "+toString(ruleg), l1);
 	}
 }
@@ -168,6 +236,20 @@ void checkCannotInherit(Entity e1, Entity e2) {
  * e1 <Action>s eX where eX != e2
  */
 void checkCanOnlyImport(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	loc l2 = entity2loc(e2);
+	for (Declaration d <- jpacmanASTs()) {
+		visit(d){
+			case \import(str name) : {
+				if (astSrc2str(d@src) == loc2str(l1)) {
+					if (loc2str(l2) != name) {
+						msgs += warning(toString(e1)+" imports "+name+" which violates rule "+toString(ruleg), l1);
+						return;
+					}
+				}
+			}
+		}
+	}
 }
 
 void checkCanOnlyDepend(Entity e1, Entity e2) {
@@ -177,32 +259,37 @@ void checkCanOnlyInvoke(Entity e1, Entity e2) {
 }
 
 void checkCanOnlyInstantiate(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	loc l2 = entity2loc(e2);
+	list[str] constructs = [x | x <- constructorCalls[toString(e1)], x != toString(e2)];
+	if (!isEmpty(constructs)) {
+		msgs += warning(toString(e1)+" instantiates "+getOneFrom(constructs)+" which violates rule "+toString(ruleg), l1);
+	}
 }
 
 void checkCanOnlyInherit(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
-	set[loc] superclasses = m3g@extends[l1];
+	set[loc] superclasses = m3@extends[l1];
 	if (superclasses != {} && superclasses != {l2}) {
-		msgs += warning(toString(e1)+" inherits "+toString(prettyLoc(getOneFrom(superclasses)))+" which violates rule "+toString(ruleg), l1);
+		msgs += warning(toString(e1)+" inherits "+toString(loc2str(getOneFrom(superclasses)))+" which violates rule "+toString(ruleg), l1);
 	}
 }
 
-// To run:
-// import sqat::series2::A2_CheckArch;
-// import sqat::series2::Dicto;
-// import lang::java::jdt::m3::Core;
-// import ParseTree;
-// M3 m3 = createM3FromEclipseProject(|project://jpacman-framework|);
-// eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
+// Call: checkArch();
+set[Message] checkArch() {
+	msgs = {};
+	findConstructorCalls();
+	//println(constructorCalls);
+	return eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
+}
+
 set[Message] eval(start[Dicto] dicto, M3 m3) = eval(dicto.top, m3);
 
 set[Message] eval((Dicto)`<Rule* rules>`, M3 m3) 
 	= ( {} | it + eval(r, m3) | r <- rules );
   
 set[Message] eval(Rule rule, M3 m3) {
-	msgs = {};
-	m3g = m3;
 	ruleg = rule;
 	
 	switch (rule) {

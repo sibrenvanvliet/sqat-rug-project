@@ -7,3 +7,17 @@ nl.tudelft.jpacman.ui.BoardPanel must inherit javax.swing.JPanel
 nl.tudelft.jpacman.npc.ghost.Blinky can only inherit nl.tudelft.jpacman.npc.ghost.Ghost
 nl.tudelft.jpacman.ui.Action can only inherit javax.swing.Action
 nl.tudelft.jpacman.ui.Action must inherit javax.swing.Action
+
+nl.tudelft.jpacman.Launcher cannot import nl.tudelft.jpacman.ui.Action
+nl.tudelft.jpacman.Launcher must import nl.tudelft.jpacman.sprite.Sprite
+nl.tudelft.jpacman.ui.Action must import nl.tudelft.jpacman.sprite.Sprite
+nl.tudelft.jpacman.npc.ghost.Navigation cannot import java.util.ArrayList
+
+nl.tudelft.jpacman.Launcher can only import nl.tudelft.jpacman.ui.Action
+nl.tudelft.jpacman.ui.Action can only import nl.tudelft.jpacman.ui.BoardPanel
+
+nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.ui.PacManUiBuilder
+nl.tudelft.jpacman.board.Unit must instantiate nl.tudelft.jpacman.ui.PacManUiBuilder
+nl.tudelft.jpacman.game.GameFactory must instantiate nl.tudelft.jpacman.game.SinglePlayerGame
+nl.tudelft.jpacman.board.Unit can only instantiate nl.tudelft.jpacman.ui.PacManUiBuilder
+nl.tudelft.jpacman.game.GameFactory can only instantiate nl.tudelft.jpacman.ui.PacManUiBuilder
