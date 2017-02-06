@@ -1,8 +1,8 @@
 nl.tudelft.jpacman.Launcher must import nl.tudelft.jpacman.npc.NPC
 nl.tudelft.jpacman.Launcher must import nl.tudelft.jpacman.game.Game
 
-nl.tudelft.jpacman must depend nl.tudelft.jpacman
-nl.tudelft.jpacman must depend nl.tudelft.jpacman
+nl.tudelft.jpacman.level.Pellet must depend nl.tudelft.jpacman.game.Game
+nl.tudelft.jpacman.level.Level must depend nl.tudelft.jpacman.level.CollisionMap
 
 nl.tudelft.jpacman.Launcher must invoke nl.tudelft.jpacman.npc.ghost.Pinky.nextMove
 nl.tudelft.jpacman.Launcher must invoke nl.tudelft.jpacman.ui.PacManUI.start
@@ -18,8 +18,8 @@ nl.tudelft.jpacman.game.SinglePlayerGame must inherit nl.tudelft.jpacman.game.Ga
 nl.tudelft.jpacman.Launcher cannot import nl.tudelft.jpacman.ui.Action
 nl.tudelft.jpacman.Launcher cannot import nl.tudelft.jpacman.ui.BoardPanel
 
-nl.tudelft.jpacman cannot depend nl.tudelft.jpacman
-nl.tudelft.jpacman cannot depend nl.tudelft.jpacman
+nl.tudelft.jpacman.level.Level cannot depend nl.tudelft.jpacman.level.CollisionMap
+nl.tudelft.jpacman.ui.Action cannot depend nl.tudelft.jpacman.npc.NPC
 
 nl.tudelft.jpacman.Launcher cannot invoke nl.tudelft.jpacman.game.Game.move
 nl.tudelft.jpacman.Launcher cannot invoke nl.tudelft.jpacman.sprite.ImageSprite.draw
@@ -37,10 +37,10 @@ nl.tudelft.jpacman.Launcher can only import nl.tudelft.jpacman.level.Pellet
 nl.tudelft.jpacman.sprite.Sprite can only import java.awt.Graphics
 nl.tudelft.jpacman.ui.Action can only import nl.tudelft.jpacman.ui.PacKeyListener
 
-nl.tudelft.jpacman can only depend nl.tudelft.jpacman
-nl.tudelft.jpacman can only depend nl.tudelft.jpacman
-nl.tudelft.jpacman can only depend nl.tudelft.jpacman
-nl.tudelft.jpacman can only depend nl.tudelft.jpacman
+nl.tudelft.jpacman.Launcher can only depend nl.tudelft.jpacman.game.Game
+nl.tudelft.jpacman.Launcher can only depend nl.tudelft.jpacman.level.Pellet
+
+nl.tudelft.jpacman.ui.Action can only depend nl.tudelft.jpacman.Launcher
 
 nl.tudelft.jpacman.Launcher can only invoke nl.tudelft.jpacman.game.Game.move
 nl.tudelft.jpacman.Launcher can only invoke nl.tudelft.jpacman.level.DefaultPlayerInteractionMap.collide

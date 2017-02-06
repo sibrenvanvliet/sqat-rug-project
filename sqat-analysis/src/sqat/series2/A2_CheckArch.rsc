@@ -94,7 +94,6 @@ set[Declaration] jpacmanASTs() = createAstsFromEclipseProject(|project://jpacman
 M3 m3 = createM3FromEclipseProject(|project://jpacman-framework|);
 
 Rule ruleg;
-set[Message] msgs = {};
 rel[str from, str to, loc src] constructorCalls = {};
 rel[str from, str to, loc src] methodCalls = {};
 
@@ -151,6 +150,7 @@ void findMethodCalls() {
 		str to = toString(t.to);
 		if (findFirst(to, "java+method") != -1) {
 			methodCalls += <prettifyLocationString(truncateToClass(from)), prettifyLocationString(truncateToMethod(to)), t.from>;
+			methodCalls += <prettifyLocationString(truncateToClass(from)), prettifyLocationString(truncateToClass(to)), t.from>;
 		}
 	}
 }
@@ -158,7 +158,7 @@ void findMethodCalls() {
 /* The 'Must<Action>' functions add a warning message if
  * e1 does not <Action> e2
  */
-void checkMustImport(Entity e1, Entity e2) {
+set[Message] checkMustImport(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
 	bool wasImported = false;
@@ -167,106 +167,135 @@ void checkMustImport(Entity e1, Entity e2) {
 			case \import(str name) : {
 				if (astSrc2str(d@src) == loc2str(l1) && loc2str(l2) == name) {
 					wasImported = true;
-					return;
+					return {};
 				}
 			}
 		}
 	}
 	if (!wasImported) {
-		msgs += warning(toString(e1)+" does not import "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+		return {warning(toString(e1)+" does not import "+toString(e2)+" which violates rule "+toString(ruleg), l1)};
 	}
 }
 
-void checkMustDepend(Entity e1, Entity e2) {
-	
-}
-
-void checkMustInvoke(Entity e1, Entity e2) {
+set[Message] checkMustDepend(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
-	if (isEmpty(methodCalls[toString(e1)][toString(e2)])) {
-		msgs += warning(toString(e1)+" does not invoke "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+	set[Message] violations	= checkCannotImport(e1,e2)
+							+ checkCannotInvoke(e1,e2)
+							+ checkCannotInstantiate(e1,e2)
+							+ checkCannotInherit(e1,e2);
+	if (isEmpty(violations)) {
+		return {warning(toString(e1)+" does not import, invoke, instantiate or inherit "+toString(e2)+" which violates rule "+toString(ruleg), l1)};
 	}
+	return {};
 }
 
-void checkMustInstantiate(Entity e1, Entity e2) {
+set[Message] checkMustInvoke(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	
+	if (isEmpty(methodCalls[toString(e1)][toString(e2)])) {
+		return {warning(toString(e1)+" does not invoke "+toString(e2)+" which violates rule "+toString(ruleg), l1)};
+	}
+	return {};
+}
+
+set[Message] checkMustInstantiate(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	if (isEmpty(constructorCalls[toString(e1)][toString(e2)])) {
-		msgs += warning(toString(e1)+" does not instantiate "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+		return {warning(toString(e1)+" does not instantiate "+toString(e2)+" which violates rule "+toString(ruleg), l1)};
 	}
+	return {};
 }
 
-void checkMustInherit(Entity e1, Entity e2) {
+set[Message] checkMustInherit(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
 	if (m3@extends[l1] != {l2}) {
-		msgs += warning(toString(e1)+" does not inherit "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+		return {warning(toString(e1)+" does not inherit "+toString(e2)+" which violates rule "+toString(ruleg), l1)};
 	}
+	return {};
 }
 
 /* The 'May' functions are empty because these rules cannot be violated,
  * therefore there are no warning messages to be added.
  */
-void checkMayImport(Entity e1, Entity e2) {
+set[Message] checkMayImport(Entity e1, Entity e2) {
+	return {};
 }
 
-void checkMayDepend(Entity e1, Entity e2) {
+set[Message] checkMayDepend(Entity e1, Entity e2) {
+	return {};
 }
 
-void checkMayInvoke(Entity e1, Entity e2) {
+set[Message] checkMayInvoke(Entity e1, Entity e2) {
+	return {};
 }
 
-void checkMayInstantiate(Entity e1, Entity e2) {
+set[Message] checkMayInstantiate(Entity e1, Entity e2) {
+	return {};
 }
 
-void checkMayInherit(Entity e1, Entity e2) {
+set[Message] checkMayInherit(Entity e1, Entity e2) {
+	return {};
 }
 
 /* The 'Cannot<Action>' functions add a warning message if
  * e1 <Action>s e2
  */
-void checkCannotImport(Entity e1, Entity e2) {
+set[Message] checkCannotImport(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
 	for (Declaration d <- jpacmanASTs()) {
 		visit(d){
 			case \import(str name) : {
 				if (astSrc2str(d@src) == loc2str(l1) && loc2str(l2) == name) {
-					msgs += warning(toString(e1)+" imports "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+					return {warning(toString(e1)+" imports "+toString(e2)+" which violates rule "+toString(ruleg), l1)};
 				}
 			}
 		}
 	}
+	return {};
 }
 
-void checkCannotDepend(Entity e1, Entity e2) {
+set[Message] checkCannotDepend(Entity e1, Entity e2) {
+	set[Message] violations	= checkCannotImport(e1,e2)
+							+ checkCannotInvoke(e1,e2)
+							+ checkCannotInstantiate(e1,e2)
+							+ checkCannotInherit(e1,e2);
+	if (!isEmpty(violations)) {
+		return {getOneFrom(violations)};
+	}
+	return {};
 }
 
-void checkCannotInvoke(Entity e1, Entity e2) {
+set[Message] checkCannotInvoke(Entity e1, Entity e2) {
 	set[loc] invocation = methodCalls[toString(e1)][toString(e2)];
 	if (!isEmpty(invocation)) {
-		msgs += warning(toString(e1)+" invokes "+toString(e2)+" which violates rule "+toString(ruleg), getOneFrom(invocation));
+		return {warning(toString(e1)+" invokes "+toString(e2)+" which violates rule "+toString(ruleg), getOneFrom(invocation))};
 	}
+	return {};
 }
 
-void checkCannotInstantiate(Entity e1, Entity e2) {
+set[Message] checkCannotInstantiate(Entity e1, Entity e2) {
 	set[loc] instantiation = constructorCalls[toString(e1)][toString(e2)];
 	if (!isEmpty(instantiation)) {
-		msgs += warning(toString(e1)+" instantiates "+toString(e2)+" which violates rule "+toString(ruleg), getOneFrom(instantiation));
+		return {warning(toString(e1)+" instantiates "+toString(e2)+" which violates rule "+toString(ruleg), getOneFrom(instantiation))};
 	}
+	return {};
 }
 
-void checkCannotInherit(Entity e1, Entity e2) {
+set[Message] checkCannotInherit(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
 	if (m3@extends[l1] == {l2}) {
-		msgs += warning(toString(e1)+" inherits "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+		return {warning(toString(e1)+" inherits "+toString(e2)+" which violates rule "+toString(ruleg), l1)};
 	}
+	return {};
 }
 
 /* The 'CanOnly<Action>' functions add a warning message if
  * e1 <Action>s eX where eX != e2
  */
-void checkCanOnlyImport(Entity e1, Entity e2) {
+set[Message] checkCanOnlyImport(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
 	for (Declaration d <- jpacmanASTs()) {
@@ -274,56 +303,60 @@ void checkCanOnlyImport(Entity e1, Entity e2) {
 			case \import(str name) : {
 				if (astSrc2str(d@src) == loc2str(l1)) {
 					if (loc2str(l2) != name) {
-						msgs += warning(toString(e1)+" imports "+name+" which violates rule "+toString(ruleg), l1);
-						return;
+						return {warning(toString(e1)+" imports "+name+" which violates rule "+toString(ruleg), l1)};
 					}
 				}
 			}
 		}
 	}
+	return {};
 }
 
-void checkCanOnlyDepend(Entity e1, Entity e2) {
+set[Message] checkCanOnlyDepend(Entity e1, Entity e2) {
+	set[Message] violations	= checkCanOnlyImport(e1,e2)
+							+ checkCanOnlyInvoke(e1,e2)
+							+ checkCanOnlyInstantiate(e1,e2)
+							+ checkCanOnlyInherit(e1,e2);
+	if (!isEmpty(violations)) {
+		return {getOneFrom(violations)};
+	}
+	return {};
 }
 
-void checkCanOnlyInvoke(Entity e1, Entity e2) {
-	list[tuple[str to, loc src]] illegalInvocations = [<x,y> | <x,y> <- methodCalls[toString(e1)], x != toString(e2)];
+set[Message] checkCanOnlyInvoke(Entity e1, Entity e2) {
+	list[tuple[str to, loc src]] illegalInvocations = [<x,y> | <x,y> <- methodCalls[toString(e1)], findFirst(toString(e2), x) == -1];
 	if (!isEmpty(illegalInvocations)) {
 		tuple[str to, loc src] violator = getOneFrom(illegalInvocations);
-		msgs += warning(toString(e1)+" invokes "+violator.to+" which violates rule "+toString(ruleg), violator.src);
+		return {warning(toString(e1)+" invokes "+violator.to+" which violates rule "+toString(ruleg), violator.src)};
 	}
+	return {};
 }
 
-void checkCanOnlyInstantiate(Entity e1, Entity e2) {
+set[Message] checkCanOnlyInstantiate(Entity e1, Entity e2) {
 	list[tuple[str to, loc src]] illegalInstantiations = [<x,y> | <x,y> <- constructorCalls[toString(e1)], x != toString(e2)];
 	if (!isEmpty(illegalInstantiations)) {
 		tuple[str to, loc src] violator = getOneFrom(illegalInstantiations);
-		msgs += warning(toString(e1)+" instantiates "+violator.to+" which violates rule "+toString(ruleg), violator.src);
+		return {warning(toString(e1)+" instantiates "+violator.to+" which violates rule "+toString(ruleg), violator.src)};
 	}
+	return {};
 }
 
-void checkCanOnlyInherit(Entity e1, Entity e2) {
+set[Message] checkCanOnlyInherit(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
 	loc l2 = entity2loc(e2);
 	set[loc] superclasses = m3@extends[l1];
 	if (superclasses != {} && superclasses != {l2}) {
-		msgs += warning(toString(e1)+" inherits "+toString(loc2str(getOneFrom(superclasses)))+" which violates rule "+toString(ruleg), l1);
+		return {warning(toString(e1)+" inherits "+toString(loc2str(getOneFrom(superclasses)))+" which violates rule "+toString(ruleg), l1)};
 	}
+	return {};
 }
 
 // Call: checkArch();
-//set[Message] checkArch() {
-void checkArch() {
-	msgs = {};
+set[Message] checkArch() {
 	findConstructorCalls();
 	findMethodCalls();
-	eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
-	for (Message m <- msgs) {
-		println(m);
-		println();
-	}
-	println(size(msgs));
-	//return eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
+	
+	return eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
 }
 
 set[Message] eval(start[Dicto] dicto, M3 m3) = eval(dicto.top, m3);
@@ -332,29 +365,30 @@ set[Message] eval((Dicto)`<Rule* rules>`, M3 m3)
 	= ( {} | it + eval(r, m3) | r <- rules );
   
 set[Message] eval(Rule rule, M3 m3) {
+	set[Message] msgs = {};
 	ruleg = rule;
 	
 	switch (rule) {
-		case (Rule)`<Entity e1> must import <Entity e2>`: 			checkMustImport(e1, e2);
-		case (Rule)`<Entity e1> must depend <Entity e2>`: 			checkMustDepend(e1, e2);
-		case (Rule)`<Entity e1> must invoke <Entity e2>`: 			checkMustInvoke(e1, e2);
-		case (Rule)`<Entity e1> must instantiate <Entity e2>`: 		checkMustInstantiate(e1, e2);
-		case (Rule)`<Entity e1> must inherit <Entity e2>`: 			checkMustInherit(e1, e2);
-		case (Rule)`<Entity e1> may import <Entity e2>`: 			checkMayImport(e1, e2);
-		case (Rule)`<Entity e1> may depend <Entity e2>`: 			checkMayDepend(e1, e2);
-		case (Rule)`<Entity e1> may invoke <Entity e2>`: 			checkMayInvoke(e1, e2);
-		case (Rule)`<Entity e1> may instantiate <Entity e2>`: 		checkMayInstantiate(e1, e2);
-		case (Rule)`<Entity e1> may inherit <Entity e2>`: 			checkMayInherit(e1, e2);
-		case (Rule)`<Entity e1> cannot import <Entity e2>`: 		checkCannotImport(e1, e2);
-		case (Rule)`<Entity e1> cannot depend <Entity e2>`: 		checkCannotDepend(e1, e2);
-		case (Rule)`<Entity e1> cannot invoke <Entity e2>`: 		checkCannotInvoke(e1, e2);
-		case (Rule)`<Entity e1> cannot instantiate <Entity e2>`: 	checkCannotInstantiate(e1, e2);
-		case (Rule)`<Entity e1> cannot inherit <Entity e2>`: 		checkCannotInherit(e1, e2);
-		case (Rule)`<Entity e1> can only import <Entity e2>`: 		checkCanOnlyImport(e1, e2);
-		case (Rule)`<Entity e1> can only depend <Entity e2>`: 		checkCanOnlyDepend(e1, e2);
-		case (Rule)`<Entity e1> can only invoke <Entity e2>`: 		checkCanOnlyInvoke(e1, e2);
-		case (Rule)`<Entity e1> can only instantiate <Entity e2>`:	checkCanOnlyInstantiate(e1, e2);
-		case (Rule)`<Entity e1> can only inherit <Entity e2>`: 		checkCanOnlyInherit(e1, e2);
+		case (Rule)`<Entity e1> must import <Entity e2>`: 			msgs += checkMustImport(e1, e2);
+		case (Rule)`<Entity e1> must depend <Entity e2>`: 			msgs += checkMustDepend(e1, e2);
+		case (Rule)`<Entity e1> must invoke <Entity e2>`: 			msgs += checkMustInvoke(e1, e2);
+		case (Rule)`<Entity e1> must instantiate <Entity e2>`: 		msgs += checkMustInstantiate(e1, e2);
+		case (Rule)`<Entity e1> must inherit <Entity e2>`: 			msgs += checkMustInherit(e1, e2);
+		case (Rule)`<Entity e1> may import <Entity e2>`: 			msgs += checkMayImport(e1, e2);
+		case (Rule)`<Entity e1> may depend <Entity e2>`: 			msgs += checkMayDepend(e1, e2);
+		case (Rule)`<Entity e1> may invoke <Entity e2>`: 			msgs += checkMayInvoke(e1, e2);
+		case (Rule)`<Entity e1> may instantiate <Entity e2>`: 		msgs += checkMayInstantiate(e1, e2);
+		case (Rule)`<Entity e1> may inherit <Entity e2>`: 			msgs += checkMayInherit(e1, e2);
+		case (Rule)`<Entity e1> cannot import <Entity e2>`: 		msgs += checkCannotImport(e1, e2);
+		case (Rule)`<Entity e1> cannot depend <Entity e2>`: 		msgs += checkCannotDepend(e1, e2);
+		case (Rule)`<Entity e1> cannot invoke <Entity e2>`: 		msgs += checkCannotInvoke(e1, e2);
+		case (Rule)`<Entity e1> cannot instantiate <Entity e2>`: 	msgs += checkCannotInstantiate(e1, e2);
+		case (Rule)`<Entity e1> cannot inherit <Entity e2>`: 		msgs += checkCannotInherit(e1, e2);
+		case (Rule)`<Entity e1> can only import <Entity e2>`: 		msgs += checkCanOnlyImport(e1, e2);
+		case (Rule)`<Entity e1> can only depend <Entity e2>`: 		msgs += checkCanOnlyDepend(e1, e2);
+		case (Rule)`<Entity e1> can only invoke <Entity e2>`: 		msgs += checkCanOnlyInvoke(e1, e2);
+		case (Rule)`<Entity e1> can only instantiate <Entity e2>`:	msgs += checkCanOnlyInstantiate(e1, e2);
+		case (Rule)`<Entity e1> can only inherit <Entity e2>`: 		msgs += checkCanOnlyInherit(e1, e2);
 	}
 	
 	return msgs;
