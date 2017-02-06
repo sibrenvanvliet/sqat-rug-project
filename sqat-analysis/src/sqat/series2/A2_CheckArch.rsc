@@ -95,17 +95,44 @@ M3 m3 = createM3FromEclipseProject(|project://jpacman-framework|);
 
 Rule ruleg;
 set[Message] msgs = {};
-rel[str from, str to] constructorCalls = {};
+rel[str from, str to, loc src] constructorCalls = {};
+rel[str from, str to, loc src] methodCalls = {};
 
-str m3loc2str(str s) {
-	str sWithoutEnd;
-	
-	if (findFirst(s, "(") == -1) {
-		sWithoutEnd = substring(s, 0, findLast(s, "|"));
+/* Given the string of a location, this function cuts it off at the method level
+ * If there is no method in the string, only cut off the closing pipe. */
+str truncateToMethod(str s) {
+	if (findFirst(s, "(") != -1) {
+		return substring(s, 0, findFirst(s, "("));
 	} else {
-		sWithoutEnd = substring(s, 0, findFirst(s, "("));
+		return substring(s, 0, findLast(s, "|"));
 	}
-	return replaceAll(substring(sWithoutEnd, findFirst(sWithoutEnd, ":///")+4, findLast(sWithoutEnd, "/")), "/", ".");
+}
+
+/* Given the string of a location, this function cuts it off at the class level */
+str truncateToClass(str s) {
+	str s2 = truncateToMethod(s);
+	return substring(s2, 0, findLast(s2, "/"));
+}
+
+/* Given the string of a location, this function cuts off the start, replaces slashes by dots, and removes pipes */
+str prettifyLocationString(str s) {
+	return replaceAll(replaceAll(substring(s, findFirst(s, ":///")+4), "/", "."), "|", "");
+}
+
+/* Same as above, but when given a loc */
+str loc2str(loc l) {
+	return prettifyLocationString(toString(l));
+}
+
+/* Same as above, but when given a loc from an AST instead of an M3 */
+str astSrc2str(loc l) {
+	str s = toString(l);
+	return replaceAll(substring(s, findFirst(s, "/src/main/java/")+15, findFirst(s, ".java")), "/", ".");
+}
+
+/* Given an Entity, turn it into a loc by adding a front and changing dots to slashes */
+loc entity2loc(Entity e) {
+	return |java+class:///| + replaceAll(toString(e), ".", "/");
 }
 
 void findConstructorCalls() {
@@ -113,22 +140,19 @@ void findConstructorCalls() {
 		str from = toString(t.from);
 		str to = toString(t.to);
 		if (findFirst(to, "java+constructor") != -1) {
-			constructorCalls[m3loc2str(from)] += m3loc2str(to);
-			//println(m3loc2str(from) + " has a constructor of " + m3loc2str(to));
+			constructorCalls += <prettifyLocationString(truncateToClass(from)), prettifyLocationString(truncateToClass(to)), t.from>;
 		}
 	}
 }
 
-loc entity2loc(Entity e) {
-	return |java+class:///| + replaceAll(toString(e), ".", "/");
-}
-
-str loc2str(loc l) {
-	return replaceAll(replaceAll(replaceAll(toString(l), "java+class:///", ""), "/", "."), "|", "");
-}
-
-str astSrc2str(loc l) {
-	return replaceAll(substring(toString(l), findFirst(toString(l), "nl/"), findFirst(toString(l), ".java")), "/", ".");
+void findMethodCalls() {
+	for (tuple[loc from, loc to] t <- m3@methodInvocation) {
+		str from = toString(t.from);
+		str to = toString(t.to);
+		if (findFirst(to, "java+method") != -1) {
+			methodCalls += <prettifyLocationString(truncateToClass(from)), prettifyLocationString(truncateToMethod(to)), t.from>;
+		}
+	}
 }
 
 /* The 'Must<Action>' functions add a warning message if
@@ -154,15 +178,19 @@ void checkMustImport(Entity e1, Entity e2) {
 }
 
 void checkMustDepend(Entity e1, Entity e2) {
+	
 }
 
 void checkMustInvoke(Entity e1, Entity e2) {
+	loc l1 = entity2loc(e1);
+	if (isEmpty(methodCalls[toString(e1)][toString(e2)])) {
+		msgs += warning(toString(e1)+" does not invoke "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+	}
 }
 
 void checkMustInstantiate(Entity e1, Entity e2) {
 	loc l1 = entity2loc(e1);
-	loc l2 = entity2loc(e2);
-	if (isEmpty([x | x <- constructorCalls[toString(e1)], x == toString(e2)])) {
+	if (isEmpty(constructorCalls[toString(e1)][toString(e2)])) {
 		msgs += warning(toString(e1)+" does not instantiate "+toString(e2)+" which violates rule "+toString(ruleg), l1);
 	}
 }
@@ -214,13 +242,16 @@ void checkCannotDepend(Entity e1, Entity e2) {
 }
 
 void checkCannotInvoke(Entity e1, Entity e2) {
+	set[loc] invocation = methodCalls[toString(e1)][toString(e2)];
+	if (!isEmpty(invocation)) {
+		msgs += warning(toString(e1)+" invokes "+toString(e2)+" which violates rule "+toString(ruleg), getOneFrom(invocation));
+	}
 }
 
 void checkCannotInstantiate(Entity e1, Entity e2) {
-	loc l1 = entity2loc(e1);
-	loc l2 = entity2loc(e2);
-	if (!isEmpty([x | x <- constructorCalls[toString(e1)], x == toString(e2)])) {
-		msgs += warning(toString(e1)+" instantiates "+toString(e2)+" which violates rule "+toString(ruleg), l1);
+	set[loc] instantiation = constructorCalls[toString(e1)][toString(e2)];
+	if (!isEmpty(instantiation)) {
+		msgs += warning(toString(e1)+" instantiates "+toString(e2)+" which violates rule "+toString(ruleg), getOneFrom(instantiation));
 	}
 }
 
@@ -256,14 +287,18 @@ void checkCanOnlyDepend(Entity e1, Entity e2) {
 }
 
 void checkCanOnlyInvoke(Entity e1, Entity e2) {
+	list[tuple[str to, loc src]] illegalInvocations = [<x,y> | <x,y> <- methodCalls[toString(e1)], x != toString(e2)];
+	if (!isEmpty(illegalInvocations)) {
+		tuple[str to, loc src] violator = getOneFrom(illegalInvocations);
+		msgs += warning(toString(e1)+" invokes "+violator.to+" which violates rule "+toString(ruleg), violator.src);
+	}
 }
 
 void checkCanOnlyInstantiate(Entity e1, Entity e2) {
-	loc l1 = entity2loc(e1);
-	loc l2 = entity2loc(e2);
-	list[str] constructs = [x | x <- constructorCalls[toString(e1)], x != toString(e2)];
-	if (!isEmpty(constructs)) {
-		msgs += warning(toString(e1)+" instantiates "+getOneFrom(constructs)+" which violates rule "+toString(ruleg), l1);
+	list[tuple[str to, loc src]] illegalInstantiations = [<x,y> | <x,y> <- constructorCalls[toString(e1)], x != toString(e2)];
+	if (!isEmpty(illegalInstantiations)) {
+		tuple[str to, loc src] violator = getOneFrom(illegalInstantiations);
+		msgs += warning(toString(e1)+" instantiates "+violator.to+" which violates rule "+toString(ruleg), violator.src);
 	}
 }
 
@@ -277,11 +312,18 @@ void checkCanOnlyInherit(Entity e1, Entity e2) {
 }
 
 // Call: checkArch();
-set[Message] checkArch() {
+//set[Message] checkArch() {
+void checkArch() {
 	msgs = {};
 	findConstructorCalls();
-	//println(constructorCalls);
-	return eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
+	findMethodCalls();
+	eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
+	for (Message m <- msgs) {
+		println(m);
+		println();
+	}
+	println(size(msgs));
+	//return eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
 }
 
 set[Message] eval(start[Dicto] dicto, M3 m3) = eval(dicto.top, m3);
@@ -314,6 +356,6 @@ set[Message] eval(Rule rule, M3 m3) {
 		case (Rule)`<Entity e1> can only instantiate <Entity e2>`:	checkCanOnlyInstantiate(e1, e2);
 		case (Rule)`<Entity e1> can only inherit <Entity e2>`: 		checkCanOnlyInherit(e1, e2);
 	}
-	  
+	
 	return msgs;
 }
