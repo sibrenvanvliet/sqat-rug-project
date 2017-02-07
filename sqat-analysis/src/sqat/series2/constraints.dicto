@@ -1,58 +1,48 @@
-nl.tudelft.jpacman.Launcher must import nl.tudelft.jpacman.npc.NPC
-nl.tudelft.jpacman.Launcher must import nl.tudelft.jpacman.game.Game
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.Action
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.BoardPanel
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.ButtonPanel
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.PacKeyListener
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.PacManUI
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.PacMacUiBuilder
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.ScorePanel
+nl.tudelft.jpacman.game.GameFactory cannot depend nl.tudelft.jpacman.ui.Action
+nl.tudelft.jpacman.game.GameFactory cannot depend nl.tudelft.jpacman.ui.BoardPanel
+nl.tudelft.jpacman.game.GameFactory cannot depend nl.tudelft.jpacman.ui.ButtonPanel
+nl.tudelft.jpacman.game.GameFactory cannot depend nl.tudelft.jpacman.ui.PacKeyListener
+nl.tudelft.jpacman.game.GameFactory cannot depend nl.tudelft.jpacman.ui.PacManUI
+nl.tudelft.jpacman.game.GameFactory cannot depend nl.tudelft.jpacman.ui.PacMacUiBuilder
+nl.tudelft.jpacman.game.GameFactory cannot depend nl.tudelft.jpacman.ui.ScorePanel
+nl.tudelft.jpacman.game.SinglePlayerGame cannot depend nl.tudelft.jpacman.ui.Action
+nl.tudelft.jpacman.game.SinglePlayerGame cannot depend nl.tudelft.jpacman.ui.BoardPanel
+nl.tudelft.jpacman.game.SinglePlayerGame cannot depend nl.tudelft.jpacman.ui.ButtonPanel
+nl.tudelft.jpacman.game.SinglePlayerGame cannot depend nl.tudelft.jpacman.ui.PacKeyListener
+nl.tudelft.jpacman.game.SinglePlayerGame cannot depend nl.tudelft.jpacman.ui.PacManUI
+nl.tudelft.jpacman.game.SinglePlayerGame cannot depend nl.tudelft.jpacman.ui.PacMacUiBuilder
+nl.tudelft.jpacman.game.SinglePlayerGame cannot depend nl.tudelft.jpacman.ui.ScorePanel
 
-nl.tudelft.jpacman.level.Pellet must depend nl.tudelft.jpacman.game.Game
-nl.tudelft.jpacman.level.Level must depend nl.tudelft.jpacman.level.CollisionMap
 
-nl.tudelft.jpacman.Launcher must invoke nl.tudelft.jpacman.npc.ghost.Pinky.nextMove
-nl.tudelft.jpacman.Launcher must invoke nl.tudelft.jpacman.ui.PacManUI.start
+nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.game.Game
+nl.tudelft.jpacman.game.GameFactory must instantiate nl.tudelft.jpacman.game.Game
 
-nl.tudelft.jpacman.Launcher must instantiate nl.tudelft.jpacman.level.Pellet
-nl.tudelft.jpacman.Launcher must instantiate nl.tudelft.jpacman.level.MapParser
+nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.board.Board
+nl.tudelft.jpacman.level.MapParser cannot instantiate nl.tudelft.jpacman.board.Board
+nl.tudelft.jpacman.board.BoardFactory must instantiate nl.tudelft.jpacman.board.Board
 
-nl.tudelft.jpacman.Launcher must inherit nl.tudelft.jpacman.game.Game
+nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.level.Level
+nl.tudelft.jpacman.level.MapParser cannot instantiate nl.tudelft.jpacman.level.Level
+nl.tudelft.jpacman.level.LevelFactory must instantiate nl.tudelft.jpacman.level.Level
+
+nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.level.Player
+nl.tudelft.jpacman.game.GameFactory cannot instantiate nl.tudelft.jpacman.level.Player
+nl.tudelft.jpacman.level.PlayerFactory must instantiate nl.tudelft.jpacman.level.Player
+
+nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.level.LevelFactory cannot instantiate nl.tudelft.jpacman.npc.ghost.Ghost
+nl.tudelft.jpacman.npc.ghost.GhostFactory must instantiate nl.tudelft.jpacman.npc.ghost.Ghost
+
+
 nl.tudelft.jpacman.game.SinglePlayerGame must inherit nl.tudelft.jpacman.game.Game
-
-
-
-nl.tudelft.jpacman.Launcher cannot import nl.tudelft.jpacman.ui.Action
-nl.tudelft.jpacman.Launcher cannot import nl.tudelft.jpacman.ui.BoardPanel
-
-nl.tudelft.jpacman.level.Level cannot depend nl.tudelft.jpacman.level.CollisionMap
-nl.tudelft.jpacman.ui.Action cannot depend nl.tudelft.jpacman.npc.NPC
-
-nl.tudelft.jpacman.Launcher cannot invoke nl.tudelft.jpacman.game.Game.move
-nl.tudelft.jpacman.Launcher cannot invoke nl.tudelft.jpacman.sprite.ImageSprite.draw
-
-nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.level.LevelFactory
-nl.tudelft.jpacman.Launcher cannot instantiate nl.tudelft.jpacman.npc.ghost.Pinky
-
-nl.tudelft.jpacman.npc.ghost.Inky cannot inherit nl.tudelft.jpacman.npc.ghost.Ghost
-nl.tudelft.jpacman.Launcher cannot inherit nl.tudelft.jpacman.game.Game
-
-
-
-nl.tudelft.jpacman.Launcher can only import nl.tudelft.jpacman.game.Game
-nl.tudelft.jpacman.Launcher can only import nl.tudelft.jpacman.level.Pellet
-nl.tudelft.jpacman.sprite.Sprite can only import java.awt.Graphics
-nl.tudelft.jpacman.ui.Action can only import nl.tudelft.jpacman.ui.PacKeyListener
-
-nl.tudelft.jpacman.Launcher can only depend nl.tudelft.jpacman.game.Game
-nl.tudelft.jpacman.Launcher can only depend nl.tudelft.jpacman.level.Pellet
-
-nl.tudelft.jpacman.ui.Action can only depend nl.tudelft.jpacman.Launcher
-
-nl.tudelft.jpacman.Launcher can only invoke nl.tudelft.jpacman.game.Game.move
-nl.tudelft.jpacman.Launcher can only invoke nl.tudelft.jpacman.level.DefaultPlayerInteractionMap.collide
-nl.tudelft.jpacman.game.GameFactory can only invoke nl.tudelft.jpacman.level.PlayerFactory.createPacMan
-nl.tudelft.jpacman.ui.Action can only invoke nl.tudelft.jpacman.board.Square.put
-
-nl.tudelft.jpacman.Launcher can only instantiate nl.tudelft.jpacman.level.MapParser
-nl.tudelft.jpacman.Launcher can only instantiate nl.tudelft.jpacman.level.Pellet
-
-nl.tudelft.jpacman.ui.Action can only instantiate nl.tudelft.jpacman.npc.NPC
-
-nl.tudelft.jpacman.npc.ghost.Clyde can only inherit javax.swing.JFrame
-nl.tudelft.jpacman.npc.ghost.Blinky can only inherit nl.tudelft.jpacman.npc.NPC
-nl.tudelft.jpacman.ui.PacManUI can only inherit javax.swing.JFrame
-nl.tudelft.jpacman.Launcher can only inherit nl.tudelft.jpacman.ui.PacManUI
+nl.tudelft.jpacman.ui.BoardPanel must inherit javax.swing.JPanel
+nl.tudelft.jpacman.ui.ButtonPanel must inherit javax.swing.JPanel
+nl.tudelft.jpacman.ui.ScorePanel must inherit javax.swing.JPanel
+nl.tudelft.jpacman.ui.PacManUI must inherit javax.swing.JFrame

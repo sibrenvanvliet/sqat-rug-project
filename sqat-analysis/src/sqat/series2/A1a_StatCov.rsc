@@ -71,29 +71,27 @@ Questions:
 	of code outside of methods which Clover tests while we do not.
 */
 
-M3 jpacmanM3() = createM3FromEclipseProject(|project://jpacman-framework/src/|);
 alias Node = tuple[loc src1, loc src2];
 alias Graph = rel[loc from, loc to];
-
-Graph G, Gtc;
-set[Node] T = {};
-set[loc] MM = {}, M = {};
 
 /*
  * Step 1: extraction.
  * This step extracts from the M3 model:
  * G, a call graph,
- * (and Gtc, the transitive closure of G),
  * MM, a set of main methods, and
  * T, a set of test methods.
  */
-void extract() {
+tuple[Graph, set[Node], set[loc]] extract(M3 F) {
+	Graph G, Gtc;
+	set[Node] T = {};
+	set[loc] MM = {};
+	
 	// Create G
-	G = jpacmanM3()@methodInvocation;
+	G = F@methodInvocation;
 	Gtc = G+;
 	
 	// Populate T
-	for (Node n <- jpacmanM3()@declarations) {
+	for (Node n <- F@declarations) {
 		if (isMethod(n.src1)) {
 			if (contains(n.src2.path, "/test/")) {
 				T += n;
@@ -102,16 +100,20 @@ void extract() {
 			}
 		}
 	}
+	
+	return <Gtc, T, MM>;
 }
 
 /*
  * Step 2: slicing.
  * In this step, we construct M, the set of main methods from G covered by tests in T.
  */
-void slice() {
+set[loc] slice(Graph G, set[Node] T, set[loc] MM) {
+	set[loc] M = {};
 	for (loc t <- [x.src1 | x <- T]) {
-		M += Gtc[t] & MM;
+		M += G[t] & MM;
 	}
+	return M;
 }
 
 /*
@@ -119,7 +121,7 @@ void slice() {
  * In this step, we count the number of main methods and the number of covered methods.
  * (We do this only at the project level, not per class.)
  */
-void count() {
+void count(set[loc] M, set[loc] MM) {
 	print("Number of methods in production code: ");
 	println(size(MM));
 	print("Number of methods reached by test code: ");
@@ -132,7 +134,7 @@ void count() {
  * and give an approximate percentage of covered/uncovered code.
  * (We do this only at the project level, not per class.)
  */
-void estimate() {
+void estimate(set[loc] M, set[loc] MM) {
 	int rp =  10000 * size(M) / size(MM);
 	real reachedPercent = rp / 100.0;
 	
@@ -146,10 +148,12 @@ void estimate() {
 }
 
 void statCov() {
-	extract();
-	slice();
-	count();
-	estimate();
+	M3 F = createM3FromEclipseProject(|project://jpacman-framework/src/|);
+
+	<G, T, MM> = extract(F);
+	M = slice(G, T, MM);
+	count(M, MM);
+	estimate(M, MM);
 }
 
 void printUncoveredMethods() {
