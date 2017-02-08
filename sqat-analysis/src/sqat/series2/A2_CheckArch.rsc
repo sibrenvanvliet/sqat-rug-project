@@ -247,7 +247,7 @@ set[Message] checkCannotImport(Entity e1, Entity e2, Rule rule) {
 		visit(d){
 			case \import(str name) : {
 				if (astSrc2str(d@src) == loc2str(l1) && loc2str(l2) == name) {
-					return {warning(toString(e1)+" imports "+toString(e2)+" which violates rule "+toString(rule), l1)};
+					return {warning(toString(e1)+" imports "+toString(e2)+" which violates rule "+toString(rule), d@src)};
 				}
 			}
 		}
@@ -302,7 +302,7 @@ set[Message] checkCanOnlyImport(Entity e1, Entity e2, Rule rule) {
 			case \import(str name) : {
 				if (astSrc2str(d@src) == loc2str(l1)) {
 					if (loc2str(l2) != name) {
-						return {warning(toString(e1)+" imports "+name+" which violates rule "+toString(rule), l1)};
+						return {warning(toString(e1)+" imports "+name+" which violates rule "+toString(rule), d@src)};
 					}
 				}
 			}
@@ -354,6 +354,7 @@ set[Message] checkCanOnlyInherit(Entity e1, Entity e2, Rule rule) {
 set[Message] checkArch() {
 	findConstructorCalls();
 	findMethodCalls();
+	// Change the file to constraintsTest.dicto for a test of every possible constraint type
 	return eval(parse(#start[Dicto], |project://sqat-analysis/src/sqat/series2/constraints.dicto|), m3);
 }
 
